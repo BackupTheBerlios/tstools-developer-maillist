@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Tstools-developer] broken head of tstools?
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/tstools-developer/2008-October/index.html" >
+   <LINK REL="made" HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20broken%20head%20of%20tstools%3F&In-Reply-To=%3C93b916dd0810240430p296e2df1p3e1cfb6bd20b96c9%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Tstools-developer] broken head of tstools?</H1>
+    <B>Lorenzo Granai</B> 
+    <A HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20broken%20head%20of%20tstools%3F&In-Reply-To=%3C93b916dd0810240430p296e2df1p3e1cfb6bd20b96c9%40mail.gmail.com%3E"
+       TITLE="[Tstools-developer] broken head of tstools?">lgranai at gmail.com
+       </A><BR>
+    <I>Fri Oct 24 13:30:41 CEST 2008</I>
+    <P><UL>
+        
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi,
+
+I've download and compiled tstools from the svn and it does not compile.
+where? of course linux, debian,  target = i486-linux-gnu
+gcc version 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
+
+There is an error in compat.h
+
+The message is:
+
+gcc -Wall -O2 -g -D_FILE_OFFSET_BITS=64 -I.     -c -o fmtx.o fmtx.c
+In file included from fmtx.c:37:
+compat.h:106: error: expected '=', ',', ';', 'asm' or '__attribute__' before
+'offset_t'
+make: *** [fmtx.o] Error 1
+
+The problem is here, with the offset, but I'm not sure about how to change
+it.
+
+// lseek on BSD/Linux uses an off_t quantity to specify the required
+// position. Where 64 bit file positions are supported, this is a 64 bit
+// value. Unfortunately, Windows has off_t defined as being a long.
+// For compatibility, therefore, we define a type that can be used on
+// both Windows and Unix
+typedef off_t offset_t;
+
+
+
+Any idea?
+
+
+L.
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/tstools-developer/attachments/20081024/f4db6915/attachment.html">https://lists.berlios.de/pipermail/tstools-developer/attachments/20081024/f4db6915/attachment.html</A>&gt;
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/tstools-developer">More information about the Tstools-developer
+mailing list</a><br>
+</body></html>

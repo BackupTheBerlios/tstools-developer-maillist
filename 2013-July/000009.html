@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Tstools-developer] [PATCH] Export the retry count of pwait &amp; cwait
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/tstools-developer/2013-July/index.html" >
+   <LINK REL="made" HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20%5BPATCH%5D%20Export%20the%20retry%20count%20of%20pwait%20%26%20cwait&In-Reply-To=%3C1374395051-10918-1-git-send-email-tjlee%40ambarella.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000010.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Tstools-developer] [PATCH] Export the retry count of pwait &amp; cwait</H1>
+    <B>Tzu-Jung Lee</B> 
+    <A HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20%5BPATCH%5D%20Export%20the%20retry%20count%20of%20pwait%20%26%20cwait&In-Reply-To=%3C1374395051-10918-1-git-send-email-tjlee%40ambarella.com%3E"
+       TITLE="[Tstools-developer] [PATCH] Export the retry count of pwait &amp; cwait">roylee17 at gmail.com
+       </A><BR>
+    <I>Sun Jul 21 10:24:11 CEST 2013</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000010.html">[Tstools-developer] Could we update the download page for v1_14?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>If we are piping from stdin or to stdout, we probably
+want to wait longer for the pipe to be ready.
+
+For example, if the input is generated from a V4L2 device, which takes
+some setup up initially before the data is output as input of tstools.
+
+Increasing the cwait would work, but the polling interval would also be
+changed. Increasing rety count makes more sense for this case.
+
+This patch also keeps the parent / child always retries, if their retry
+count is specified as zero.
+
+Signed-off-by: Tzu-Jung Lee &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/tstools-developer">tjlee at ambarella.com</A>&gt;
+---
+ tswrite.c | 44 +++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 39 insertions(+), 5 deletions(-)
+
+diff --git a/tswrite.c b/tswrite.c
+index 3e03131..2222f69 100644
+--- a/tswrite.c
++++ b/tswrite.c
+@@ -128,6 +128,9 @@ static int global_child_wait = DEFAULT_CHILD_WAIT;
+ // And a similar quantity for the parent, in case the child dies
+ #define PARENT_GIVE_UP_AFTER 1000
+ 
++static int global_child_wait_retry = CHILD_GIVE_UP_AFTER;
++static int global_parent_wait_retry = PARENT_GIVE_UP_AFTER;
++
+ // If not being quiet, report progress every REPORT_EVERY packets read
+ #define REPORT_EVERY 10000
+ 
+@@ -479,7 +482,7 @@ static inline int wait_if_buffer_empty(circular_buffer_p  circular)
+ #endif // _WIN32
+ 
+     // If we wait for a *very* long time, maybe our parent has crashed
+-    if (count &gt; CHILD_GIVE_UP_AFTER)
++    if (global_child_wait_retry &amp;&amp; count &gt; global_child_wait_retry)
+     {
+       print_err(&quot;### Child: giving up (parent not responding)\n&quot;);
+       return 1;
+@@ -523,7 +526,7 @@ static inline int wait_for_buffer_to_fill(circular_buffer_p  circular)
+ #endif // _WIN32
+ 
+     // If we wait for a *very* long time, maybe our parent has crashed
+-    if (count &gt; CHILD_GIVE_UP_AFTER)
++    if (global_child_wait_retry &amp;&amp; count &gt; global_child_wait_retry)
+     {
+       print_err(&quot;### Child: giving up (parent not responding)\n&quot;);
+       return 1;
+@@ -573,7 +576,7 @@ static inline int wait_if_buffer_full(circular_buffer_p  circular)
+     }
+ 
+     // If we wait for a *very* long time, maybe our child has crashed
+-    if (count &gt; PARENT_GIVE_UP_AFTER)
++    if (global_parent_wait_retry &amp;&amp; count &gt; global_parent_wait_retry)
+     {
+       print_err(&quot;### Parent: giving up (child not responding)\n&quot;);
+       return 1;
+@@ -3164,17 +3167,28 @@ extern void tswrite_help_tuning(void)
+     &quot;  -pwait &lt;n&gt;        The parent process should wait &lt;n&gt;ms when the\n&quot;
+     &quot;                    buffer is full before checking again.\n&quot;
+     &quot;                    The default is 50ms.\n&quot;
+-    &quot;  -cwait &lt;n&gt;        The child processs should wait &lt;n&gt;ms when the\n&quot;
++    &quot;\n&quot;
++    &quot;  -pwait_retry &lt;n&gt;  The parent process gives up after &lt;n&gt; times of\n&quot;
++    &quot;                    checks and the buffer is still full.\n&quot;
++    &quot;                    If &lt;n&gt; is 0, the parent process always retries.\n&quot;
++    &quot;                    The default is 1000 retries.\n&quot;
++    &quot;\n&quot;
++    &quot;  -cwait &lt;n&gt;        The child process should wait &lt;n&gt;ms when the\n&quot;
+     &quot;                    buffer is empty, before checking again.\n&quot;
+     &quot;                    The default is 10ms.\n&quot;
+     &quot;\n&quot;
++    &quot;  -cwait_retry &lt;n&gt;  The child process gives up after &lt;n&gt; times of\n&quot;
++    &quot;                    checks and the buffer is still empty.\n&quot;
++    &quot;                    If &lt;n&gt; is 0, the child process always retries.\n&quot;
++    &quot;                    The default is 1000 retries.\n&quot;
++    &quot;\n&quot;
+     &quot;For convenience, the '-hd' switch is provided for playing HD video:\n&quot;
+     &quot;\n&quot;
+     &quot;  -hd               equivalent to '-bitrate 20000000 -maxnowait off\n&quot;
+     &quot;                                   -pwait 4 -cwait 1'\n&quot;
+     &quot;\n&quot;
+     &quot;(the exact values may change in future releases of this software).\n&quot;
+-    &quot;It may also sometimes help to specify '-nopcr' as well (i.e., ignore\n&quot;
++    &quot;It may also sometimes help to specify '-nopcrs' as well (i.e., ignore\n&quot;
+     &quot;the timing information in the video stream itself).\n&quot;
+     &quot;&quot;,
+     DEFAULT_BYTE_RATE,
+@@ -3523,6 +3537,26 @@ extern int tswrite_process_args(char           *prefix,
+       argv[ii] = argv[ii+1] = TSWRITE_PROCESSED;
+       ii++;
+     }
++    else if (!strcmp(&quot;-cwait_retry&quot;,argv[ii]))
++    {
++      int temp;
++      CHECKARG(prefix,ii);
++      err = int_value(prefix,argv[ii],argv[ii+1],TRUE,10,&amp;temp);
++      if (err) return 1;
++      global_child_wait_retry = temp;
++      argv[ii] = argv[ii+1] = TSWRITE_PROCESSED;
++      ii++;
++    }
++    else if (!strcmp(&quot;-pwait_retry&quot;,argv[ii]))
++    {
++      int temp;
++      CHECKARG(prefix,ii);
++      err = int_value(prefix,argv[ii],argv[ii+1],TRUE,10,&amp;temp);
++      if (err) return 1;
++      global_parent_wait_retry = temp;
++      argv[ii] = argv[ii+1] = TSWRITE_PROCESSED;
++      ii++;
++    }
+     else if (!strcmp(&quot;-perturb&quot;,argv[ii]))
+     {
+       int temp;
+-- 
+1.8.3.2
+
+</PRE>
+
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000010.html">[Tstools-developer] Could we update the download page for v1_14?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/tstools-developer">More information about the Tstools-developer
+mailing list</a><br>
+</body></html>

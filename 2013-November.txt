@@ -1,0 +1,19 @@
+From dark_footix at yahoo.fr  Thu Nov 14 10:22:11 2013
+From: dark_footix at yahoo.fr (dark_footix)
+Date: Thu, 14 Nov 2013 09:22:11 +0000 (GMT)
+Subject: [Tstools-developer] tsplay and force packet lost ?
+Message-ID: <1384420931.35510.YahooMailNeo@web171506.mail.ir2.yahoo.com>
+
+Hi Tstools.
+
+Is it possible to force a network degradation with tsplay ? 
+
+I am streaming in RTP, and my client is ckecking to packet counter lost.
+By using tsplay, I suppose I will have zero packet lost, but I am wondering if this streamer can force a lost packet percent ?? like netdisturb.
+
+Best Regards,
+Fr?d?ric
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: <https://lists.berlios.de/pipermail/tstools-developer/attachments/20131114/9240f87d/attachment.html>
+

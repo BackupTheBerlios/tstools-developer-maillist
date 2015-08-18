@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Tstools-developer] ts2es support for extraction of HLS encrypted	video and audio streams
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/tstools-developer/2013-September/index.html" >
+   <LINK REL="made" HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20ts2es%20support%20for%20extraction%20of%20HLS%20encrypted%0A%09video%20and%20audio%20streams&In-Reply-To=%3CCACYqGFhsbAvoc65D23ONTkJcPYVBg1jc729LwdUMcbFvmrQ8hw%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Tstools-developer] ts2es support for extraction of HLS encrypted	video and audio streams</H1>
+    <B>Laurent Faureytier</B> 
+    <A HREF="mailto:tstools-developer%40lists.berlios.de?Subject=Re%3A%20%5BTstools-developer%5D%20ts2es%20support%20for%20extraction%20of%20HLS%20encrypted%0A%09video%20and%20audio%20streams&In-Reply-To=%3CCACYqGFhsbAvoc65D23ONTkJcPYVBg1jc729LwdUMcbFvmrQ8hw%40mail.gmail.com%3E"
+       TITLE="[Tstools-developer] ts2es support for extraction of HLS encrypted	video and audio streams">lfaureyt at gmail.com
+       </A><BR>
+    <I>Fri Sep  6 10:18:19 CEST 2013</I>
+    <P><UL>
+        
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#11">[ date ]</a>
+              <a href="thread.html#11">[ thread ]</a>
+              <a href="subject.html#11">[ subject ]</a>
+              <a href="author.html#11">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I was trying to suggest patches through the google code web interface (see
+issue #24) but it turns out it does not work well, so let's start from
+scratch by submitting this to the developer mailing list.
+
+I want to be able to use ts2es to extract HLS encrypted video or audio
+elementary streams of type 0xDB (encrypted AVC video), 0xCF (encrypted AAC
+audio) and 0xC1 (encrypted AC3 audio).
+
+Those 3 private stream types are defined by Apple (
+<A HREF="https://developer.apple.com/library/ios/documentation/AudioVideo/Conceptual/HLS_Sample_Encryption/TransportStreamSignaling/TransportStreamSignaling.html#apple_ref/doc/uid/TP40012862-CH3-SW1">https://developer.apple.com/library/ios/documentation/AudioVideo/Conceptual/HLS_Sample_Encryption/TransportStreamSignaling/TransportStreamSignaling.html#apple_ref/doc/uid/TP40012862-CH3-SW1</A>)
+for their proprietary - yet publicly specified and very widely used - HTTP
+Live Streaming protocol (
+<A HREF="http://tools.ietf.org/html/draft-pantos-http-live-streaming-11">http://tools.ietf.org/html/draft-pantos-http-live-streaming-11</A>), when used
+with encryption method &quot;SAMPLE-AES&quot;. The need for easy extraction of such
+proprietary elementary streams arises from the fact that they cannot be
+decrypted without prior transport stream demultiplexing.
+This is not the case for the other HLS supported encryption method
+&quot;AES-128&quot;, where encryption occurs over the TS layer.
+
+The modification I propose to implement is basically to add an option to
+ts2es (-hls or -apple or -encrypted ?) that adds the above 3 proprietary
+stream types to the recognized audio/video stream types (see macros
+IS_VIDEO/AUDIO_STREAM_TYPE in h222_defns.h) so I am able to extract an
+encrypted elementary video stream by using the following command:
+
+$ ts2es -video -hls &lt;input_chunk.ts&gt; &lt;output_encrypted_video.264&gt;
+
+If you are not in favor of hardcoding proprietary stream type values into
+the code, an other alternative (maybe better, now that I think about it)
+would be to let the user specify the value of the desired stream type from
+the command line:
+
+$ ts2es -type 0xDB &lt;input_chunk.ts&gt; &lt;output_encrypted_video.264&gt;
+
+Note that specifying the PID of the video on the command line instead of
+specifying '-video' already works (but I don't want the user to have to
+determine the PID first, and prefer to let ts2es handle automatic PAT/PMT
+parsing as it does today).
+
+So, please, let me know if you're OK with such (rather simple) changes and
+how I should proceed to implement them.
+
+Best regards,
+
+-- 
+Laurent
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/tstools-developer/attachments/20130906/c06084b0/attachment.html">https://lists.berlios.de/pipermail/tstools-developer/attachments/20130906/c06084b0/attachment.html</A>&gt;
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#11">[ date ]</a>
+              <a href="thread.html#11">[ thread ]</a>
+              <a href="subject.html#11">[ subject ]</a>
+              <a href="author.html#11">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/tstools-developer">More information about the Tstools-developer
+mailing list</a><br>
+</body></html>
